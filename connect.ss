@@ -10,6 +10,18 @@
 
 (printf "~a : ~a : ~a~n~n" total first last)
 
+;; read-all: int int -> void
+;; recurse over all possible message "numbers" from the newsgroup
+;;   I wonder what will happen with the messages that slrn doesn't let
+;;   me read?
+(define (read-all first last newsd)
+  (cond
+    [(= first last) (printf "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n")]
+    ;;    ^^^^ Screw it, I'll just increment first as I recurse.
+    [else (printf "~s\n\n" (body-of-message newsd first))
+          (read-all (+ first 1) last newsd)]))
+
+
 ;(for-each (lambda (x) (printf "~a~n" x)) (head-of-message uwnews 6038))
 
 (define from-regexp (make-desired-header "From"))
