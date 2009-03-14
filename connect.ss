@@ -16,9 +16,9 @@
 ;;   me read?
 (define (read-all first last newsd)
   (cond
-    [(= first last) (printf "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n")]
+    [(= first last) (printf "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n")]
     ;;    ^^^^ Screw it, I'll just increment first as I recurse.
-    [else (printf "~s\n\n" (body-of-message newsd first))
+    [else (printf "MID: ~a~n~s\n\n" first (body-of-message newsd first))
           (read-all (+ first 1) last newsd)]))
 
 
@@ -31,6 +31,13 @@
                        (list from-regexp mid-regexp)))
 
 (printf "From:  ~a~nMID:   ~a~n~n" (car from-and-mid) (cadr from-and-mid))
+
+(printf "-------------------------------------------------------~n~n~n~n")
+
+;(call-with-exception-handler
+;  (lambda (x) (printf "~n~n=================~nWoah, check it: ~a~n~n" x)) 
+(read-all first last uwnews)
+;)
 
 (disconnect-from-server uwnews)
 (display "Disconnected.\n")
