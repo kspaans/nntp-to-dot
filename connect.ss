@@ -3,6 +3,35 @@
 (require net/nntp)
 
 ;; A first try with connecting to the newsgroup and downloading some posts
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Data structure to capture interactions on the newsgroup.
+;;  Want to have FROM and TO fields. Ideally TO should be a list of
+;;   people who the from has interacted with. Or perhaps use a hash table?
+;;   Yes, want constant insert time for new users (read: node), and then
+;;   value can be a list of other users that this user has interacted with.
+;;  Should I differentiate between interactions in FROM and TO?
+;;  ^^^^^^^^^ I don't think I can. Especailly since I can make it an
+;;   undirected graph.
+
+(define users (make-hash-table))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(hash-table-put! users 'kspaans@csclub.uwaterloo.ca '())
+(hash-table-put! users 'kspaans@csclub.uwaterloo.ca
+                       (cons 'nosane@user.com
+		             (hash-table-get users 'kspaans@csclub.uwaterloo.ca)))
+;; ^^^^ This is kind of tricky? Because I'll have to search the hashtable for each
+;;   value _while_ inserting it and adding to it... This seems indeal.
+;; Since hastables are mutable, maybe I can integrate getting they key into the
+;; whole process? I.E. search to make sure it's already there, and meanwhile
+;; save the value. If it's not already there, revert to adding the user.
+
+
+(hash-table-for-each users (lambda (x y) (printf "~a~n" y)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define uwnews (connect-to-server "news.uwaterloo.ca"))
 
