@@ -60,29 +60,26 @@
   (cond
     [(= first last) (printf "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n")]
     ;;    ^^^^ Screw it, I'll just increment first as I recurse.
-    [else (printf "MID: ~a~n~s\n\n"
-            first
-            (with-handlers ([article-not-in-group?
-                             (lambda (x) (format "Post ~a probably deleted.~n"
-                                         (article-not-in-group-article x)))])
-              ;(body-of-message newsd first)
-              (let ((from (extract-desired-headers (head-of-message uwnews first)
-                                                   (list from-regexp))))
-                (hash-set! httest from '())
-                ;(printf "Added user to Hash Table: ~a~n" from)
-                from)
-              ))
+    [else (local ((define mesg-from (with-handlers ([article-not-in-group?
+                                                     (lambda (x) #f)])
+                                      (extract-desired-headers
+                                        (head-of-message uwnews first)
+                                        (list from-regexp)))))
+          (cond [(not (boolean? mesg-from))
+                 (let ((in-table (hash-ref httest mesg-from #f)))
+                   (cond [(false? in-table) (hash-set! httest mesg-from 1)]
+                         [else (hash-set! httest mesg-from (+ 1 in-table))]))]))
           (read-all (+ first 1) last newsd)]))
 
 ;(printf "-------------------------------------------------------~n~n~n~n")
 
 ;(read-all first last uwnews)
-(read-all first (+ first 20) uwnews)
+(read-all first (+ first 1000) uwnews)
 
 ;; Now let's see what's in the hash table
 (printf "########~n")
 ;(printf "Size of Table: ~a~n" (hash
-(hash-for-each httest (lambda (x y) (printf "-->~a~n" x)))
+(hash-for-each httest (lambda (x y) (printf "-->~a\t\t~a~n" x y)))
 (printf "########~n")
 
 (disconnect-from-server uwnews)
