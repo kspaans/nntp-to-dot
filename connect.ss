@@ -52,6 +52,14 @@
 
 ;(printf "From:  ~a~nMID:   ~a~n~n" (car from-and-mid) (cadr from-and-mid))
 
+;; message-getter: newsgroup_connector number regexp -> (union string false)
+;; Do the dirty work of reading the message header info from the newsgroup.
+;; Returns false if the article cannot be retreived, and a string otherwise.
+(define (message-getter group article headers)
+  (with-handlers ([article-not-in-group? (lambda (x) #f)])
+    (extract-desired-headers (head-of-message group article)
+                             headers)))
+
 ;; read-all: int int -> void
 ;; recurse over all possible message "numbers" from the newsgroup
 ;;   I wonder what will happen with the messages that slrn doesn't let
@@ -60,11 +68,8 @@
   (cond
     [(= first last) (printf "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n")]
     ;;    ^^^^ Screw it, I'll just increment first as I recurse.
-    [else (local ((define mesg-from (with-handlers ([article-not-in-group?
-                                                     (lambda (x) #f)])
-                                      (extract-desired-headers
-                                        (head-of-message uwnews first)
-                                        (list from-regexp)))))
+    [else (local ((define mesg-from
+                          (message-getter uwnews first (list from-regexp))))
           (cond [(not (boolean? mesg-from))
                  (let ((in-table (hash-ref httest mesg-from #f)))
                    (cond [(false? in-table) (hash-set! httest mesg-from 1)]
