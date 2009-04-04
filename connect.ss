@@ -31,7 +31,7 @@
 ;; save the value. If it's not already there, revert to adding the user.
 
 
-(hash-for-each users (lambda (x y) (printf "~a~n" y)))
+;(hash-for-each users (lambda (x y) (printf "~a~n" y)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -60,7 +60,7 @@
     (extract-desired-headers (head-of-message group article)
                              headers)))
 
-;; read-all: int int -> void
+;; read-all: int int newsgroup -> void
 ;; recurse over all possible message "numbers" from the newsgroup
 ;;   I wonder what will happen with the messages that slrn doesn't let
 ;;   me read?
@@ -77,6 +77,16 @@
           (read-all (+ first 1) last newsd)]))
 
 ;(printf "-------------------------------------------------------~n~n~n~n")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; nntp-map: operation newsgroup -> void
+;; maps some operation across each newsgroup post
+;;;(define (nntp-map op newsd)
+;;;  (let-values ([(total first-id last-id) (open-news-group newsd "uw.cs.cs136")])
+;;;    (op newsd
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;(read-all first last uwnews)
 (read-all first (+ first 1000) uwnews)
