@@ -19,6 +19,7 @@
 (define users (make-hash))
 
 (define httest (make-hash))
+(define refers (make-hash))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (hash-set! users 'kspaans@csclub.uwaterloo.ca '())
@@ -108,15 +109,13 @@
             (cond
 	      [(and (not (boolean? mesg-from)) (> (length mesg-from) 3))
                (printf "From: ~a~nSubj: ~a~nMID:  ~a~nRefs: ~a~n~n"
-		       (car mesg-from) (cadr mesg-from) (caddr mesg-from) (cadddr mesg-from))]
+		       (car mesg-from) (cadr mesg-from) (caddr mesg-from) (get-refs (cadddr mesg-from)))]
               [(not (boolean? mesg-from))
-	       (printf "From: ~a~nSubj: ~a~nMID:  ~a~nRefs: ~a~n~n"
-        	       (car mesg-from) (cadr mesg-from) (caddr mesg-from) (cdddr mesg-from))]))
+	       (printf "From: ~a~nSubj: ~a~nMID:  ~a~n~n"
+        	       (car mesg-from) (cadr mesg-from) (caddr mesg-from))]))
           (thread-all (+ first 1) last newsd)]))
 
-;(thread-all first (+ first 1000) uwnews)
-(get-refs "<3zzli631eo.fsf@ds1.cs> <111131eo.fsf@ds1.cs>")
-(get-refs "your mom!")
+(thread-all first (+ first 20) uwnews)
 
 ;(read-all first last uwnews)
 ;(read-all first (+ first 1000) uwnews)
