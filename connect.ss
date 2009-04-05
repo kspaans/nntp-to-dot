@@ -1,6 +1,7 @@
 #lang scheme
 
 (require net/nntp)
+(require "ref-helper.ss")
 
 ;; A first try with connecting to the newsgroup and downloading some posts
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -45,7 +46,9 @@
 ;(for-each (lambda (x) (printf "~a~n" x)) (head-of-message uwnews 6038))
 
 (define from-regexp (make-desired-header "From"))
-;(define mid-regexp (make-desired-header "Message-ID"))
+(define mid-regexp (make-desired-header "Message-ID"))
+(define ref-regexp (make-desired-header "References"))
+(define subj-regexp (make-desired-header "Subject"))
 ;(define from-and-mid (extract-desired-headers
 ;                       (head-of-message uwnews 6038)
 ;                       (list from-regexp mid-regexp)))
@@ -88,14 +91,41 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; thread-depth: newsgroup article -> void
+;; Given a newsgroup article, prints the depth of the thread that it's in.
+;;   OH GAWD this sounds inefficient, but should be a good prototype.
+;(define thread-dpeth
+
+;; look at head of the first few messages
+(define (thread-all first last newsd)
+  (cond
+    [(= first last) (printf "****************\n")]
+    [else (local ((define mesg-from (message-getter uwnews first
+			                            (list from-regexp
+						          mid-regexp
+							  ref-regexp
+							  subj-regexp))))
+            (cond
+	      [(and (not (boolean? mesg-from)) (> (length mesg-from) 3))
+               (printf "From: ~a~nSubj: ~a~nMID:  ~a~nRefs: ~a~n~n"
+		       (car mesg-from) (cadr mesg-from) (caddr mesg-from) (cadddr mesg-from))]
+              [(not (boolean? mesg-from))
+	       (printf "From: ~a~nSubj: ~a~nMID:  ~a~nRefs: ~a~n~n"
+        	       (car mesg-from) (cadr mesg-from) (caddr mesg-from) (cdddr mesg-from))]))
+          (thread-all (+ first 1) last newsd)]))
+
+;(thread-all first (+ first 1000) uwnews)
+(get-refs "<3zzli631eo.fsf@ds1.cs> <111131eo.fsf@ds1.cs>")
+(get-refs "your mom!")
+
 ;(read-all first last uwnews)
-(read-all first (+ first 1000) uwnews)
+;(read-all first (+ first 1000) uwnews)
 
 ;; Now let's see what's in the hash table
-(printf "########~n")
+;(printf "########~n")
 ;(printf "Size of Table: ~a~n" (hash
-(hash-for-each httest (lambda (x y) (printf "-->~a\t\t~a~n" x y)))
-(printf "########~n")
+;(hash-for-each httest (lambda (x y) (printf "-->~a\t\t~a~n" x y)))
+;(printf "########~n")
 
 (disconnect-from-server uwnews)
-(display "Disconnected.\n")
+;(display "Disconnected.\n")
