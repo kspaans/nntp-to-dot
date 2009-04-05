@@ -1,11 +1,10 @@
 #lang scheme
-(provide get-refs)
-
+(provide get-refs make-dot-id)
 ;; get-refs: string -> (listof string)
 ;; Given an NNTP "References:" header line, will extract all Message-IDs in it
 (define references-regexp #rx"<[^>]*>")
 (define (get-refs refline)
-  (let ([ref-match (regexp-match references-regexp refline)])
+  (let [(ref-match (regexp-match references-regexp refline))]
     (cond
       [(boolean? ref-match) empty]
       [else (cons (car ref-match)
@@ -15,3 +14,23 @@
                                        (cdar (regexp-match-positions
 				               references-regexp
 					       refline)))))])))
+
+;; make-dot-id: void -> string
+;; Generates a unique dot ID every time it is called, side effect of
+;; incrementing an internal counter is used.
+;; Turns an integer (internal counter) into a string of uppercase
+;; letters
+(define counter -1)
+;;;;
+(define (num2letters num first)
+  (cond [(and (not first) (zero? num)) '()]
+        [else (list->string
+                (map integer->char
+                     (cons (+ 65 (modulo num 26))
+                           (num2letters (quotient num 26) false))))]))
+(define make-dot-id
+  (lambda ()
+   ; (local [(define counter -1)]
+      (begin
+        (set! counter (+ 1 counter))
+        (num2letters counter true))));)
