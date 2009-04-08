@@ -22,15 +22,15 @@
 ;; letters
 (define counter -1)
 ;;;;
-(define (num2letters num first)
+(define (num2list num first)
   (cond [(and (not first) (zero? num)) '()]
-        [else (list->string
-                (map integer->char
-                     (cons (+ 65 (modulo num 26))
-                           (num2letters (quotient num 26) false))))]))
+        [else (cons (+ 65 (modulo num 26))
+                    (num2list (quotient num 26) false))]))
+(define (num2letters num first)
+  (list->string (reverse
+    (map integer->char (num2list num first)))))
 (define make-dot-id
   (lambda ()
-   ; (local [(define counter -1)]
       (begin
         (set! counter (+ 1 counter))
-        (num2letters counter true))));)
+        (num2letters counter true))))
