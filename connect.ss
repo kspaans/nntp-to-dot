@@ -140,21 +140,23 @@
                  (cond
                    [(boolean? (car result))
                     (printf "----~nInserting MID(~a) into hash table.~n" (car mesg-ID))
-                    ;(let ([node-id (make-dot-id)])
                       (fprintf dotfile "// Node ~a\n    ~a;\n" mesg-ID node-id)
-                      (hash-set! refers (car mesg-ID) node-id)];)]
+                      (hash-set! refers (car mesg-ID) node-id)]
                    [else (printf "MIDs already in hash table?~n    >>~a<<~n" (caddr mesg-from))]))
+                 ;(if (> (length (car mesg-ID)) 1)
+                 ;    (printf "Exciting, more than one reference!~n")
+                 ;    (void)))
                (cond [(> (length mesg-from) 3)
                       (printf "Checking References to find threading...~n")
                       (let* [(Refs (get-refs (cadddr mesg-from)))
                              (hRef (hash-ref refers (car Refs) #f))]
                         (printf "Refs:     ~a~n" Refs)
-                        (printf "          Is it in the table? ~a~n" hRef)
-                        (if (boolean? hRef) (printf "        Nope.~n")
-                            (fprintf dotfile "    ~a -> ~a;\n" hRef node-id)))])
-               (printf "Headers:\t ~a~n~n" mesg-from)]
-               ;(printf "From: ~a~nSubj: ~a~nMID:  ~a~n~n"
-               ;        (car mesg-from) (cadr mesg-from) (caddr mesg-from))]
+                        (printf "          Is it in the table? ~a~n~n" hRef)
+                        (if (boolean? hRef) (void) ; (printf "          Nope.~n~n")
+                            (fprintf dotfile "    ~a -> ~a;\n" hRef node-id)))]
+                     [else ;(printf "Headers:\t ~a~n~n" mesg-from)])]
+                       (for-each (lambda (z) (printf "\t~a~n" z)) mesg-from)
+                       (newline)])]
               [(not (boolean? mesg-from))
                (printf "Pooppoop!~n")
                (printf "From: ~a~nSubj: ~a~nMID:  ~a~n~n"
@@ -163,7 +165,7 @@
 
 ;(thread-print first (+ first 20) uwnews)
 (thread-hash first (+ first 100) uwnews)
-;refers
+;; Want better threading now. Use the second pair in the references line
 
 
 ;(read-all first last uwnews)
