@@ -23,21 +23,8 @@
 (define dotfile (open-output-file "cs136-trial.dot" #:exists 'truncate))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(hash-set! users 'kspaans@csclub.uwaterloo.ca '())
-(hash-set! users 'kspaans@csclub.uwaterloo.ca
-                       (cons 'nosane@user.com
-		             (hash-ref users 'kspaans@csclub.uwaterloo.ca)))
-
 (fprintf dotfile "digraph cs136 {\n")
 (fprintf dotfile "// Trial run starting at: ~a\n" (current-seconds))
-;; ^^^^ This is kind of tricky? Because I'll have to search the hashtable for each
-;;   value _while_ inserting it and adding to it... This seems indeal.
-;; Since hastables are mutable, maybe I can integrate getting they key into the
-;; whole process? I.E. search to make sure it's already there, and meanwhile
-;; save the value. If it's not already there, revert to adding the user.
-
-
-;(hash-for-each users (lambda (x y) (printf "~a~n" y)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -164,9 +151,44 @@
           (thread-hash (+ first 1) last newsd)]))
 
 ;(thread-print first (+ first 20) uwnews)
-(thread-hash first (+ first 100) uwnews)
+;(thread-hash first (+ first 100) uwnews)
 ;; Want better threading now. Use the second pair in the references line
 
+
+;; userrel: User relations: who talked to whom on the newsgroup?
+;; Store usernames (email addressses) and their message-ids in a hash table
+;; for retreival and matching later.
+(define (userrel first last newsd)
+  (cond
+    [(= first last) (void)]
+    [else
+     (local [(define mesg-from
+                     (message-getter uwnews first
+                                     (list from-regexp  ; Ugh, the order coming out of this function
+		                           mid-regexp ; depends on what's in the headers, not the
+					   ref-regexp)))  ; order I have here. Usually From, Subj, MID, Refs
+             (define node-id (make-dot-id))]
+       (cond
+         [(and (not (boolean? mesg-from)) (= (length mesg-from) 3))
+          ;; There are references, which we need to check against a list of things
+          ;; crap! I'm pretty sure this means that I'll need to have a hash table of
+          ;; MID -> user as well... Or maybe use only a hash like that?
+          (printf "Larp!~n~n")
+          (userrel (+ 1 first) last newsd)]
+         [(and (not (boolean? mesg-from)) (= (length mesg-from) 2))
+          ;; Only From and MID? It's a first post.
+          (printf "--> New Post:~n")
+          (printf " `-> From: ~a~n" (car mesg-from))
+          (printf " `-> MID:  ~a~n~n" (cadr mesg-from))
+          (ins-user-id users (car mesg-from) (cadr mesg-from))
+          (userrel (+ 1 first) last newsd)]
+         [else (userrel (+ 1 first) last newsd)]))]))
+
+(userrel first (+ 100 first) uwnews)
+
+(begin
+  (hash-map users (lambda (x y) (printf "~a: ~a~n~n" x (hash-count y))))
+  "_ _ _")
 
 ;(read-all first last uwnews)
 ;(read-all first (+ first 1000) uwnews)

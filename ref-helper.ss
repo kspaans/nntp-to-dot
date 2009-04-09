@@ -1,5 +1,5 @@
 #lang scheme
-(provide get-refs make-dot-id)
+(provide get-refs make-dot-id ins-user-id)
 ;; get-refs: string -> (listof string)
 ;; Given an NNTP "References:" header line, will extract all Message-IDs in it
 (define references-regexp #rx"<[^>]*>")
@@ -34,3 +34,18 @@
       (begin
         (set! counter (+ 1 counter))
         (num2letters counter true))))
+
+;; ins-user-id: hash-table string string -> void
+;; Inserts user information into a hash table. Takes the table, the username
+;; (email address) and a message-id. user is used as the key and MID the
+;; value. Each user can post multiple messages, therefore MIDs are stored
+;; in another hash table along with the (date/time/order/count?) of the post
+(define (ins-user-id htable user mid)
+  (let [(uresult (hash-ref htable user #f))]
+    (if (boolean? uresult)
+        ;; New user, create hash with MID
+        (local [(define new-user-htable (make-hash))]
+          (hash-set! new-user-htable mid 0) ; user date instead?
+          (hash-set! htable user new-user-htable))
+        ;; Add MID to hash table (MIDs are assumed to be unique
+	(hash-set! uresult mid (hash-count uresult)))))
