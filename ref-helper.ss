@@ -1,5 +1,5 @@
 #lang scheme
-(provide get-refs make-dot-id ins-user-id)
+(provide get-refs make-dot-id ins-user-id ins-mid-u)
 ;; get-refs: string -> (listof string)
 ;; Given an NNTP "References:" header line, will extract all Message-IDs in it
 (define references-regexp #rx"<[^>]*>")
@@ -49,3 +49,15 @@
           (hash-set! htable user new-user-htable))
         ;; Add MID to hash table (MIDs are assumed to be unique
 	(hash-set! uresult mid (hash-count uresult)))))
+
+;; ins-mid-u: hash-table string string -> void
+;; Inserts message-ID information into a hash table. Takes the table, the message-id
+;; and a username (email address). MID is used as the key and user the
+;; value. MIDs are unique, but multiple MIDS may have the same user value
+(define (ins-mid-u htable mid user)
+  (let [(mresult (hash-ref htable mid #f))]
+    (if (boolean? mresult)
+        ;; New MID, associate with user
+        (hash-set! htable mid user)
+        ;; Mid already exists?
+	(error 'mid-collision))))

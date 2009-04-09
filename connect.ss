@@ -17,6 +17,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (define users (make-hash))
+(define mids (make-hash))
 (define httest (make-hash))
 (define refers (make-hash))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -173,22 +174,43 @@
           ;; There are references, which we need to check against a list of things
           ;; crap! I'm pretty sure this means that I'll need to have a hash table of
           ;; MID -> user as well... Or maybe use only a hash like that?
-          (printf "Larp!~n~n")
+          (printf "--> ~a~n" (caddr mesg-from))
+          (printf " `-> Using ~a~n" (car (get-refs (caddr mesg-from))))
+          (let [(exists (hash-ref mids (car (get-refs (caddr mesg-from))) #f))
+                (postee (hash-ref users (car mesg-from) #f))]
+            (cond
+              ;; Clearly I can do something better than just bail here.
+              [(boolean? exists) (printf " `-> Uhhh, ref to post that DNE?~n~n")]
+              [(boolean? postee) (printf " `-> Uhhh, ref to user that DNE?~n~n")]
+              [else (printf "  |`-> ~a :: ~a~n" (car mesg-from) postee)
+                    (printf "  `-> ~a~n~n" exists)
+                    (fprintf dotfile "~a -> ~a;\n" postee (cadr exists))]))
           (userrel (+ 1 first) last newsd)]
          [(and (not (boolean? mesg-from)) (= (length mesg-from) 2))
           ;; Only From and MID? It's a first post.
           (printf "--> New Post:~n")
-          (printf " `-> From: ~a~n" (car mesg-from))
-          (printf " `-> MID:  ~a~n~n" (cadr mesg-from))
-          (ins-user-id users (car mesg-from) (cadr mesg-from))
+          (printf " `-> ~a :: ~a~n" (car mesg-from) node-id)
+          (printf " `-> MID:  ~a~n~n" (car (get-refs (cadr mesg-from))))
+          ;; Save a key->val: MID -> '(From node-ID)
+          (ins-mid-u mids (car (get-refs (cadr mesg-from)))
+                           (list (car mesg-from) node-id))
+          ;; Save a key->val: From -> node-ID
+          (let [(uresult (hash-ref users (car mesg-from) #f))]
+            (cond
+              [(boolean? uresult)
+               (hash-set! users (car mesg-from) node-id)
+               (fprintf dotfile "~a //[label=\"~a\"];\n" node-id (car mesg-from))]))
           (userrel (+ 1 first) last newsd)]
          [else (userrel (+ 1 first) last newsd)]))]))
 
-(userrel first (+ 100 first) uwnews)
+(userrel first (+ 200 first) uwnews)
 
-(begin
-  (hash-map users (lambda (x y) (printf "~a: ~a~n~n" x (hash-count y))))
-  "_ _ _")
+;(begin
+;  (hash-map users (lambda (x y) (printf "~a]]] ~a~n~n" x y)))
+;  "_ _ _")
+;(begin
+;  (hash-map mids (lambda (x y) (printf "~a]]] ~a~n~n" x y)))
+;  "_ _ _")
 
 ;(read-all first last uwnews)
 ;(read-all first (+ first 1000) uwnews)
