@@ -1,5 +1,17 @@
 #lang scheme
-(provide get-refs make-dot-id ins-user-id ins-mid-u)
+
+(require net/nntp)
+
+(provide message-getter get-refs make-dot-id ins-user-id ins-mid-u)
+
+;; message-getter: newsgroup_connector number regexp -> (union string false)
+;; Do the dirty work of reading the message header info from the newsgroup.
+;; Returns false if the article cannot be retreived, and a string otherwise.
+(define (message-getter group article headers)
+  (with-handlers ([article-not-in-group? (lambda (x) #f)])
+    (extract-desired-headers (head-of-message group article)
+                             headers)))
+
 ;; get-refs: string -> (listof string)
 ;; Given an NNTP "References:" header line, will extract all Message-IDs in it
 (define references-regexp #rx"<[^>]*>")

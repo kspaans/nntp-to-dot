@@ -30,31 +30,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define uwnews (connect-to-server "news.uwaterloo.ca"))
-
 (define-values (total first last) (open-news-group uwnews "uw.cs.cs136"))
-
 (printf "~a : ~a : ~a~n~n" total first last)
 
-
-;(for-each (lambda (x) (printf "~a~n" x)) (head-of-message uwnews 6038))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define from-regexp (make-desired-header "From"))
 (define mid-regexp (make-desired-header "Message-ID"))
 (define ref-regexp (make-desired-header "References"))
 (define subj-regexp (make-desired-header "Subject"))
-;(define from-and-mid (extract-desired-headers
-;                       (head-of-message uwnews 6038)
-;                       (list from-regexp mid-regexp)))
 
-;(printf "From:  ~a~nMID:   ~a~n~n" (car from-and-mid) (cadr from-and-mid))
-
-;; message-getter: newsgroup_connector number regexp -> (union string false)
-;; Do the dirty work of reading the message header info from the newsgroup.
-;; Returns false if the article cannot be retreived, and a string otherwise.
-(define (message-getter group article headers)
-  (with-handlers ([article-not-in-group? (lambda (x) #f)])
-    (extract-desired-headers (head-of-message group article)
-                             headers)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; read-all: int int newsgroup -> void
 ;; recurse over all possible message "numbers" from the newsgroup
@@ -63,16 +49,13 @@
 (define (read-all first last newsd)
   (cond
     [(= first last) (printf "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n")]
-    ;;    ^^^^ Screw it, I'll just increment first as I recurse.
-    [else (local ((define mesg-from
-                          (message-getter uwnews first (list from-regexp))))
-          (cond [(not (boolean? mesg-from))
-                 (let ((in-table (hash-ref httest mesg-from #f)))
-                   (cond [(false? in-table) (hash-set! httest mesg-from 1)]
-                         [else (hash-set! httest mesg-from (+ 1 in-table))]))]))
+    [else (let [(message (message-getter uwnews first (list from-regexp subj-regexp)))]
+            (cond
+              [(boolean? message) (void)]
+              [else (for-each (lambda (header) (printf "~a~n" header))
+                              message)])
+            (newline))
           (read-all (+ first 1) last newsd)]))
-
-;(printf "-------------------------------------------------------~n~n~n~n")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -180,8 +163,10 @@
                 (postee (hash-ref users (car mesg-from) #f))]
             (cond
               ;; Clearly I can do something better than just bail here.
-              [(boolean? exists) (printf " `-> Uhhh, ref to post that DNE?~n~n")]
-              [(boolean? postee) (printf " `-> Uhhh, ref to user that DNE?~n~n")]
+              [(boolean? exists) (printf " `-> Uhhh, ref to post that DNE?~n")
+                                 (printf "  `-> ~a :: ~a~n~n" (car mesg-from) node-id)]
+              [(boolean? postee) (printf " `-> Uhhh, ref to user that DNE?~n")
+                                 (printf "  `-> ~a :: ~a~n~n" (car mesg-from) node-id)]
               [else (printf "  |`-> ~a :: ~a~n" (car mesg-from) postee)
                     (printf "  `-> ~a~n~n" exists)
                     (fprintf dotfile "~a -> ~a;\n" postee (cadr exists))]))
@@ -203,7 +188,8 @@
           (userrel (+ 1 first) last newsd)]
          [else (userrel (+ 1 first) last newsd)]))]))
 
-(userrel first (+ 200 first) uwnews)
+(read-all first (+ 10 first) uwnews)
+(userrel first (+ 10 first) uwnews)
 
 ;(begin
 ;  (hash-map users (lambda (x y) (printf "~a]]] ~a~n~n" x y)))
