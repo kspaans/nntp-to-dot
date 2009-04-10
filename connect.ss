@@ -157,11 +157,11 @@
           (printf "--> ~a~n" (caddr mesg-from))
           (printf " `-> Using ~a~n" (car (get-refs (caddr mesg-from))))
           (let [(exists (hash-ref mids (car (get-refs (caddr mesg-from))) #f))
-                (postee (hash-ref users (car mesg-from) #f))]
+                (poster (hash-ref users (car mesg-from) #f))]
             (cond
               [(boolean? exists) (printf " `-> Uhhh, ref to post that DNE?~n")
                                  (printf "  `-> ~a :: ~a~n~n" (car mesg-from) node-id)]
-              [(boolean? postee) ;(printf " `-> Uhhh, ref to user that DNE?~n")
+              [(boolean? poster) ;(printf " `-> Uhhh, ref to user that DNE?~n")
                                  (printf "  |`-> ~a :: ~a~n" (car mesg-from) node-id)
                                  (printf "  `-> ~a~n~n" exists)
                                  (ins-mid-u mids (car (get-refs (cadr mesg-from)))
@@ -169,24 +169,28 @@
                                  (hash-set! users (car mesg-from) node-id)
                                  (fprintf dotfile "~a //[label=\"~a\"];\n" node-id (car mesg-from))
                                  (fprintf dotfile "~a -> ~a;\n" node-id (cadr exists))]
-              [else (printf "  |`-> ~a :: ~a~n" (car mesg-from) postee)
+              [else (printf "  |`-> ~a :: ~a~n" (car mesg-from) poster)
                     (printf "  `-> ~a~n~n" exists)
-                    (fprintf dotfile "~a -> ~a;\n" postee (cadr exists))]))
+                    (fprintf dotfile "~a -> ~a;\n" poster (cadr exists))]))
           (userrel (+ 1 first) last newsd)]
          [(and (not (boolean? mesg-from)) (= (length mesg-from) 2))
           ;; Only From and MID? It's a first post.
           (printf "--> New Post:~n")
           (printf " `-> ~a :: ~a~n" (car mesg-from) node-id)
           (printf " `-> MID:  ~a~n~n" (car (get-refs (cadr mesg-from))))
-          ;; Save a key->val: MID -> '(From node-ID)
-          (ins-mid-u mids (car (get-refs (cadr mesg-from)))
-                           (list (car mesg-from) node-id))
-          ;; Save a key->val: From -> node-ID
           (let [(uresult (hash-ref users (car mesg-from) #f))]
             (cond
+              ;; If user does not already exist:
               [(boolean? uresult)
+               ;; Save a key->val: MID -> '(From node-ID)
+               (ins-mid-u mids (car (get-refs (cadr mesg-from)))
+                               (list (car mesg-from) node-id))
+               ;; Save a key->val: From -> node-ID
                (hash-set! users (car mesg-from) node-id)
-               (fprintf dotfile "~a //[label=\"~a\"];\n" node-id (car mesg-from))]))
+               (fprintf dotfile "~a //[label=\"~a\"];\n" node-id (car mesg-from))]
+              ;; Else only add the MID and existing node-ID to the hash table
+              [else (ins-mid-u mids (car (get-refs (cadr mesg-from)))
+                                    (list (car mesg-from) uresult))]))
           (userrel (+ 1 first) last newsd)]
          [else (userrel (+ 1 first) last newsd)]))]))
 
