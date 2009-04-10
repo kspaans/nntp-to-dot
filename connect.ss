@@ -26,6 +26,8 @@
 
 (fprintf dotfile "digraph cs136 {\n")
 (fprintf dotfile "// Trial run starting at: ~a\n" (current-seconds))
+(fprintf dotfile "ranksep = 3\n")
+;(fprintf dotfile "nodesep = 1.0\n")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -168,10 +170,10 @@
                                                  (list (car mesg-from) node-id))
                                  (hash-set! users (car mesg-from) node-id)
                                  (fprintf dotfile "~a //[label=\"~a\"];\n" node-id (car mesg-from))
-                                 (fprintf dotfile "~a -> ~a;\n" node-id (cadr exists))]
+                                 (fprintf dotfile "~a -> ~a [arrowhead=\"tee\"];\n" node-id (cadr exists))]
               [else (printf "  |`-> ~a :: ~a~n" (car mesg-from) poster)
                     (printf "  `-> ~a~n~n" exists)
-                    (fprintf dotfile "~a -> ~a;\n" poster (cadr exists))]))
+                    (fprintf dotfile "~a -> ~a [arrowhead=\"tee\"];\n" poster (cadr exists))]))
           (userrel (+ 1 first) last newsd)]
          [(and (not (boolean? mesg-from)) (= (length mesg-from) 2))
           ;; Only From and MID? It's a first post.
@@ -194,8 +196,8 @@
           (userrel (+ 1 first) last newsd)]
          [else (userrel (+ 1 first) last newsd)]))]))
 
-(read-all first (+ 10 first) uwnews)
-(userrel first (+ 10 first) uwnews)
+;(read-all first (+ 100 first) uwnews)
+(userrel first (+ 800 first) uwnews)
 
 ;(begin
 ;  (hash-map users (lambda (x y) (printf "~a]]] ~a~n~n" x y)))
