@@ -49,7 +49,7 @@
 (define (read-all first last newsd)
   (cond
     [(= first last) (printf "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n")]
-    [else (let [(message (message-getter uwnews first (list from-regexp subj-regexp)))]
+    [else (let [(message (message-getter uwnews first (list from-regexp subj-regexp mid-regexp ref-regexp)))]
             (cond
               [(boolean? message) (void)]
               [else (for-each (lambda (header) (printf "~a~n" header))
@@ -154,19 +154,21 @@
              (define node-id (make-dot-id))]
        (cond
          [(and (not (boolean? mesg-from)) (= (length mesg-from) 3))
-          ;; There are references, which we need to check against a list of things
-          ;; crap! I'm pretty sure this means that I'll need to have a hash table of
-          ;; MID -> user as well... Or maybe use only a hash like that?
           (printf "--> ~a~n" (caddr mesg-from))
           (printf " `-> Using ~a~n" (car (get-refs (caddr mesg-from))))
           (let [(exists (hash-ref mids (car (get-refs (caddr mesg-from))) #f))
                 (postee (hash-ref users (car mesg-from) #f))]
             (cond
-              ;; Clearly I can do something better than just bail here.
               [(boolean? exists) (printf " `-> Uhhh, ref to post that DNE?~n")
                                  (printf "  `-> ~a :: ~a~n~n" (car mesg-from) node-id)]
-              [(boolean? postee) (printf " `-> Uhhh, ref to user that DNE?~n")
-                                 (printf "  `-> ~a :: ~a~n~n" (car mesg-from) node-id)]
+              [(boolean? postee) ;(printf " `-> Uhhh, ref to user that DNE?~n")
+                                 (printf "  |`-> ~a :: ~a~n" (car mesg-from) node-id)
+                                 (printf "  `-> ~a~n~n" exists)
+                                 (ins-mid-u mids (car (get-refs (cadr mesg-from)))
+                                                 (list (car mesg-from) node-id))
+                                 (hash-set! users (car mesg-from) node-id)
+                                 (fprintf dotfile "~a //[label=\"~a\"];\n" node-id (car mesg-from))
+                                 (fprintf dotfile "~a -> ~a;\n" node-id (cadr exists))]
               [else (printf "  |`-> ~a :: ~a~n" (car mesg-from) postee)
                     (printf "  `-> ~a~n~n" exists)
                     (fprintf dotfile "~a -> ~a;\n" postee (cadr exists))]))
