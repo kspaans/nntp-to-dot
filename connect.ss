@@ -158,10 +158,17 @@
          [(and (not (boolean? mesg-from)) (= (length mesg-from) 3))
           (printf "--> ~a~n" (caddr mesg-from))
           (printf " `-> Using ~a~n" (car (get-refs (caddr mesg-from))))
+                ;; Supposedly I want to use the _last_ reference from the list in that header line.
+                ;; since any reply has all references of message it replies to, plus MID.
+                ;;  ---> helper function that traverses list and prints out threading as it goes by
+                ;;  searching the hash table
           (let [(exists (hash-ref mids (car (get-refs (caddr mesg-from))) #f))
                 (poster (hash-ref users (car mesg-from) #f))]
             (cond
               [(boolean? exists) (printf " `-> Uhhh, ref to post that DNE?~n")
+                        ;; consider this just like the case where there is a new post:
+                        ;;  check to see if user already exists
+                        ;;  create node but not edge
                                  (printf "  `-> ~a :: ~a~n~n" (car mesg-from) node-id)]
               [(boolean? poster) ;(printf " `-> Uhhh, ref to user that DNE?~n")
                                  (printf "  |`-> ~a :: ~a~n" (car mesg-from) node-id)
