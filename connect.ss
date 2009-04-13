@@ -1,3 +1,7 @@
+;; Copyright (C) 2009  Kyle Spaans
+;;  this program is distributed under the GPL v2 or (at your option)
+;;  any later version.
+
 #lang scheme
 
 (require net/nntp)
@@ -177,10 +181,10 @@
                                                  (list (car mesg-from) node-id))
                                  (hash-set! users (car mesg-from) node-id)
                                  (fprintf dotfile "~a //[label=\"~a\"];\n" node-id (car mesg-from))
-                                 (fprintf dotfile "~a -> ~a [arrowhead=\"tee\"];\n" node-id (cadr exists))]
+                                 (fprintf dotfile "~a -> ~a //[arrowhead=\"none\", style=\"invis\"];\n" node-id (cadr exists))]
               [else (printf "  |`-> ~a :: ~a~n" (car mesg-from) poster)
                     (printf "  `-> ~a~n~n" exists)
-                    (fprintf dotfile "~a -> ~a [arrowhead=\"tee\"];\n" poster (cadr exists))]))
+                    (fprintf dotfile "~a -> ~a //[arrowhead=\"none\", style=\"invis\"];\n" poster (cadr exists))]))
           (userrel (+ 1 first) last newsd)]
          [(and (not (boolean? mesg-from)) (= (length mesg-from) 2))
           ;; Only From and MID? It's a first post.

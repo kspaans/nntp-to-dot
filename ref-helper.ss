@@ -1,3 +1,7 @@
+;; Copyright (C) 2009  Kyle Spaans
+;;  this program is distributed under the GPL v2 or (at your option)
+;;  any later version.
+
 #lang scheme
 
 (require net/nntp)

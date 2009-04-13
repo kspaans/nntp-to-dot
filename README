@@ -1,2 +1,6 @@
 Scheme code and associate code for parsing the analyzing the newsgroup for my
-work report.
+work report, Winter 2009 term.
+
+Currently this is aimed at the CS 136 newsgroup. This can be easily changed.
+
+This code requires PLT Scheme v4.0 or later.
