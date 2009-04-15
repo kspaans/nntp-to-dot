@@ -5,8 +5,11 @@
 #lang scheme
 
 (require net/nntp)
+(require srfi/19)
 (require "ref-helper.ss")
 
+(provide uwnews total first last read-all posts-per-day thread-print
+         thread-hash userrel)
 ;; A first try with connecting to the newsgroup and downloading some posts
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -45,13 +48,12 @@
 (define mid-regexp (make-desired-header "Message-ID"))
 (define ref-regexp (make-desired-header "References"))
 (define subj-regexp (make-desired-header "Subject"))
+(define date-regexp (make-desired-header "Date"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; read-all: int int newsgroup -> void
 ;; recurse over all possible message "numbers" from the newsgroup
-;;   I wonder what will happen with the messages that slrn doesn't let
-;;   me read?
 (define (read-all first last newsd)
   (cond
     [(= first last) (printf "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n")]
@@ -62,6 +64,46 @@
                               message)])
             (newline))
           (read-all (+ first 1) last newsd)]))
+
+;; posts-per-day: int int newsgroup -> void
+;; Print the date of each message in a format appropriate for gnuplot
+;;  "date number"
+;; Date headers seem to be either 32,36,37 or 43 chars long
+(define (posts-per-day first last newsd)
+  (cond
+    [(= first last) (void)]
+    [else (let [(message (message-getter uwnews first (list date-regexp)))]
+            (cond
+              [(boolean? message) (void)]
+              [else (printf "~a~n~a~n" (string-length (car message)) (car message))
+               (let [(mlen (string-length (car message)))]
+               (cond
+                 [(= 32 mlen) (printf "~a~n" (string->date (substring (car message) 5) "~d ~b ~Y ~H:~M:~S ~z"))]
+                 [(= 36 mlen) (printf "~a~n" (string->date (substring (car message) 5) "~a, ~d ~b ~Y ~H:~M:~S ~z"))]
+                 [(= 37 mlen) (printf "~a~n" (string->date (substring (car message) 5) "~a, ~d ~b ~Y ~H:~M:~S ~z"))]
+                 [(= 43 mlen) (printf "~a~n" (string->date (substring (car message) 5) "~a, ~d ~b ~Y ~H:~M:~S ~z"))]))]))
+          (posts-per-day (+ first 1) last newsd)]))
+
+#|    [else (let [(message (message-getter uwnews first (list date-regexp)))]
+            (cond
+              [(boolean? message) (void)]
+              [else (if (> (string-length (car message)) 32)
+                        (printf "~a~n"
+                            (substring (car message)
+                                       11
+                                       ;; Assume all date headers are nice and uniform
+                                       ;; use that date SRFI?
+                                       (- (string-length (car message)) 15)))
+                            ;first)
+                        (printf "~a~n"
+                            (substring (car message)
+                                       6
+                                       ;; Assume all date headers are nice and uniform
+                                       ;; use that date SRFI?
+                                       (- (string-length (car message)) 15))))]))
+                            ;first)
+          (posts-per-day (+ first 1) last newsd)]))
+|#
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -207,20 +249,23 @@
           (userrel (+ 1 first) last newsd)]
          [else (userrel (+ 1 first) last newsd)]))]))
 
-;(read-all first (+ 100 first) uwnews)
-(userrel first (+ 800 first) uwnews)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;(read-all first (+ 100 first) uwnews)
+;;(userrel first (+ 800 first) uwnews)
 
-;(begin
-;  (hash-map users (lambda (x y) (printf "~a]]] ~a~n~n" x y)))
-;  "_ _ _")
-;(begin
-;  (hash-map mids (lambda (x y) (printf "~a]]] ~a~n~n" x y)))
-;  "_ _ _")
+;;(begin
+;;  (hash-map users (lambda (x y) (printf "~a]]] ~a~n~n" x y)))
+;;  "_ _ _")
+;;(begin
+;;  (hash-map mids (lambda (x y) (printf "~a]]] ~a~n~n" x y)))
+;;  "_ _ _")
 
-;(read-all first last uwnews)
-;(read-all first (+ first 1000) uwnews)
+(posts-per-day first (+ 200 first) uwnews)
+;;(read-all first last uwnews)
+;;(read-all first (+ first 1000) uwnews)
+
+
 (fprintf dotfile "// Trial run finished at: ~a\n}\n" (current-seconds))
 
 (close-output-port dotfile)
 (disconnect-from-server uwnews)
-;(display "Disconnected.\n")
