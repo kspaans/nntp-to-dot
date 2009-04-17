@@ -2,11 +2,24 @@
 ;;  this program is distributed under the GPL v2 or (at your option)
 ;;  any later version.
 
+;; Some common helper functions
+
 #lang scheme
 
 (require net/nntp)
 
-(provide message-getter get-refs make-dot-id ins-user-id ins-mid-u)
+(provide message-getter get-refs make-dot-id ins-user-id ins-mid-u from-regexp
+         mid-regexp ref-regexp subj-regexp date-regexp)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define from-regexp (make-desired-header "From"))
+(define mid-regexp (make-desired-header "Message-ID"))
+(define ref-regexp (make-desired-header "References"))
+(define subj-regexp (make-desired-header "Subject"))
+(define date-regexp (make-desired-header "Date"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; message-getter: newsgroup_connector number regexp -> (union string false)
 ;; Do the dirty work of reading the message header info from the newsgroup.
