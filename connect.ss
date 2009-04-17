@@ -27,6 +27,7 @@
 (define mids (make-hash))
 (define httest (make-hash))
 (define refers (make-hash))
+(define dates (make-hash))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (define dotfile (open-output-file "cs136-trial.dot" #:exists 'truncate))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -40,7 +41,6 @@
 
 (define uwnews (connect-to-server "news.uwaterloo.ca"))
 (define-values (total first last) (open-news-group uwnews "uw.cs.cs136"))
-(printf "~a : ~a : ~a~n~n" total first last)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -66,23 +66,38 @@
           (read-all (+ first 1) last newsd)]))
 
 ;; posts-per-day: int int newsgroup -> void
-;; Print the date of each message in a format appropriate for gnuplot
-;;  "date number"
+;; Print out the number of posts per day on the newsgroup, in a format ready for
+;; gnuplot to plot.
 ;; Date headers seem to be either 32,36,37 or 43 chars long
+;; --> Parse date, save to a list, For-each save $DAY into hash table with count
+(define date-list '())
 (define (posts-per-day first last newsd)
   (cond
-    [(= first last) (void)]
-    [else (let [(message (message-getter uwnews first (list date-regexp)))]
+    [(= first last) (dates-to-count date-list)]
+    [else (let [(message (message-getter newsd first (list date-regexp)))]
             (cond
               [(boolean? message) (void)]
-              [else (printf "~a~n~a~n" (string-length (car message)) (car message))
+              [else ;(printf "~a~n~a~n" (string-length (car message)) (car message))
                (let [(mlen (string-length (car message)))]
                (cond
-                 [(= 32 mlen) (printf "~a~n" (string->date (substring (car message) 5) "~d ~b ~Y ~H:~M:~S ~z"))]
-                 [(= 36 mlen) (printf "~a~n" (string->date (substring (car message) 5) "~a, ~d ~b ~Y ~H:~M:~S ~z"))]
-                 [(= 37 mlen) (printf "~a~n" (string->date (substring (car message) 5) "~a, ~d ~b ~Y ~H:~M:~S ~z"))]
-                 [(= 43 mlen) (printf "~a~n" (string->date (substring (car message) 5) "~a, ~d ~b ~Y ~H:~M:~S ~z"))]))]))
+                 [(= 32 mlen) (set! date-list (cons (string->date (substring (car message) 5) "~d ~b ~Y ~H:~M:~S ~z") date-list))]
+                 [(= 36 mlen) (set! date-list (cons (string->date (substring (car message) 5) "~a, ~d ~b ~Y ~H:~M:~S ~z") date-list))]
+                 [(= 37 mlen) (set! date-list (cons (string->date (substring (car message) 5) "~a, ~d ~b ~Y ~H:~M:~S ~z") date-list))]
+                 [(= 43 mlen) (set! date-list (cons (string->date (substring (car message) 5) "~a, ~d ~b ~Y ~H:~M:~S ~z") date-list))]))]))
           (posts-per-day (+ first 1) last newsd)]))
+
+;; dates-to-count: (listof date) -> void
+;; Uses the global "dates" hash table to store counts (values) related to unique
+;; days (keys) that are built up using posts-per-day and stored in date-list
+(define (dates-to-count dlst)
+  (cond
+    [(empty? dlst) (hash-for-each dates (lambda (d c) (printf "~a ~a~n" d c)))]
+    [else
+     (letrec [(date (date->string (car dlst) "~D"))
+              (count (hash-ref dates date #f))]
+       (cond
+         [(boolean? count) (hash-set! dates date 1) (dates-to-count (cdr dlst))]
+         [else (hash-set! dates date (+ 1 count)) (dates-to-count (cdr dlst))]))]))
 
 #|    [else (let [(message (message-getter uwnews first (list date-regexp)))]
             (cond
@@ -260,7 +275,7 @@
 ;;  (hash-map mids (lambda (x y) (printf "~a]]] ~a~n~n" x y)))
 ;;  "_ _ _")
 
-(posts-per-day first (+ 200 first) uwnews)
+(posts-per-day first last uwnews)
 ;;(read-all first last uwnews)
 ;;(read-all first (+ first 1000) uwnews)
 
