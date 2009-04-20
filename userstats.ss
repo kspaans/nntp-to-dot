@@ -14,7 +14,7 @@
 (require "common.ss")
 (require srfi/19)
 
-(provide count-users)
+(provide count-users new-u-vs-time)
 
 ;; User Statistics Struct
 ;; String - usename in the form of an email address, possibility of duplicates
@@ -80,3 +80,21 @@
                                                  pdays
                                                  (/ new-nump pdays))))]))]))
           (count-users (+ first 1) last newsd)]))
+
+;; new-u-vs-time: void -> void
+;; Prints out info (similar to PPD) representing the number of new users showing up
+;; on the newsgroup (e.g. first posts) plotted versus time. This will be plottable with GNUPLOT.
+;; First map all first post instances to a new hash table that will count the number of first
+;; posts on each day. Then map over that hash table to print them out appropriately.
+(define (new-u-vs-time)
+  (let [(new-u-hash (make-hash))]
+    (hash-for-each
+      users
+      (lambda (k v)
+        (letrec [(ndate (date->string (ustats-firstp v) "~D"))
+                 (result (hash-ref new-u-hash ndate #f))]
+          (cond
+            [(boolean? result) (hash-set! new-u-hash ndate 1)]
+            [else (hash-set! new-u-hash ndate (+ 1 result))]))))
+    (hash-for-each new-u-hash
+                   (lambda (k v) (printf "~a ~a~n" k v)))))
