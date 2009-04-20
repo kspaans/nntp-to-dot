@@ -38,11 +38,5 @@
     [else (let [(message (message-getter newsd first (list date-regexp)))]
             (cond
               [(boolean? message) (void)]
-              [else ;(printf "~a~n~a~n" (string-length (car message)) (car message))
-               (let [(mlen (string-length (car message)))]
-               (cond
-                 [(= 32 mlen) (set! date-list (cons (string->date (substring (car message) 5) "~d ~b ~Y ~H:~M:~S ~z") date-list))]
-                 [(= 36 mlen) (set! date-list (cons (string->date (substring (car message) 5) "~a, ~d ~b ~Y ~H:~M:~S ~z") date-list))]
-                 [(= 37 mlen) (set! date-list (cons (string->date (substring (car message) 5) "~a, ~d ~b ~Y ~H:~M:~S ~z") date-list))]
-                 [(= 43 mlen) (set! date-list (cons (string->date (substring (car message) 5) "~a, ~d ~b ~Y ~H:~M:~S ~z") date-list))]))]))
+              [else (set! date-list (cons (get-date (car message)) date-list))]))
           (posts-per-day (+ first 1) last newsd)]))

@@ -15,6 +15,7 @@
 (require "userrel.ss")
 (require "thread.ss")
 (require "ppd.ss")
+(require "userstats.ss")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -39,7 +40,7 @@
 (define (read-all first last newsd)
   (cond
     [(= first last) (printf "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n")]
-    [else (let [(message (message-getter uwnews first (list from-regexp subj-regexp mid-regexp ref-regexp)))]
+    [else (let [(message (message-getter newsd first (list from-regexp subj-regexp mid-regexp ref-regexp date-regexp)))]
             (cond
               [(boolean? message) (void)]
               [else (for-each (lambda (header) (printf "~a~n" header))
@@ -74,7 +75,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; CODE TO EXECUTE ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(posts-per-day first last uwnews)
+;(posts-per-day first last uwnews)
+(count-users first last uwnews)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (close-output-port dotfile)

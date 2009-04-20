@@ -7,9 +7,10 @@
 #lang scheme
 
 (require net/nntp)
+(require srfi/19)
 
 (provide message-getter get-refs make-dot-id ins-user-id ins-mid-u from-regexp
-         mid-regexp ref-regexp subj-regexp date-regexp)
+         mid-regexp ref-regexp subj-regexp date-regexp get-date)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -90,3 +91,22 @@
         (hash-set! htable mid user)
         ;; Mid already exists?
 	(error 'mid-collision))))
+
+;; get-date: string -> date
+;; Returns an SRFI-19 date object based on the date header from the newsgroup
+;; Date headers seem to be either 32,36,37,42 or 43 chars long
+;;   can this be generalized better?
+(define (get-date date-str)
+  (let [(mlen (string-length date-str))]
+    (cond
+      [(= 32 mlen) (string->date (substring date-str 6)
+                                 "~d ~b ~Y ~H:~M:~S ~z")]
+      [(= 36 mlen) (string->date (substring date-str 6)
+                                 "~a, ~d ~b ~Y ~H:~M:~S ~z")]
+      [(= 37 mlen) (string->date (substring date-str 6)
+                                 "~a, ~d ~b ~Y ~H:~M:~S ~z")]
+      [(= 42 mlen) (string->date (substring date-str 6)
+                                 "~a, ~d ~b ~Y ~H:~M:~S ~z")]
+      [(= 43 mlen) (string->date (substring date-str 6)
+                                 "~a, ~d ~b ~Y ~H:~M:~S ~z")]
+      [else (printf "date string was unknown length ~a~n" mlen) #xDEADBEEF])))
