@@ -21,10 +21,10 @@
 ;; Store usernames (email addressses) and their message-ids in a hash table
 ;; for retreival and matching later.
 (define (userrel first last newsd dotfile)
-  (fprintf dotfile "digraph cs136-userrel {\n")
-  (fprintf dotfile "// Run starting at: ~a\n" (current-seconds))
-  (fprintf dotfile "ranksep = 3\n")
-  ;(fprintf dotfile "nodesep = 1.0\n")
+  ;(fprintf dotfile "digraph cs136_userrel {\n")
+  ;(fprintf dotfile "// Run starting at: ~a\n" (current-seconds))
+  ;(fprintf dotfile "ranksep = 3\n")
+  ;;(fprintf dotfile "nodesep = 1.0\n")
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   (cond
     [(= first last) (void)]
@@ -82,5 +82,4 @@
               [else (ins-mid-u mids (car (get-refs (cadr mesg-from)))
                                     (list (car mesg-from) uresult))]))
           (userrel (+ 1 first) last newsd)]
-         [else (userrel (+ 1 first) last newsd)]))])
-  (fprintf dotfile "// Run finished at: ~a\n}\n" (current-seconds)))
+         [else (userrel (+ 1 first) last newsd)]))]))

@@ -30,6 +30,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (define dotfile (open-output-file "data/cs136-trial.dot" #:exists 'truncate))
+(fprintf dotfile "digraph cs136__ {\n")
+(fprintf dotfile "// Run starting at: ~a\n" (current-seconds))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define uwnews (connect-to-server "news.uwaterloo.ca"))
@@ -75,10 +77,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; CODE TO EXECUTE ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;(posts-per-day first last uwnews)
-(count-users first last uwnews)
-(new-u-vs-time)
+;(thread-print first last uwnews)
+(thread-hash first (+ 100 first) uwnews dotfile)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(fprintf dotfile "// Run finished at: ~a\n}\n" (current-seconds))
 (close-output-port dotfile)
 (disconnect-from-server uwnews)

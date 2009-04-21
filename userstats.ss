@@ -14,7 +14,7 @@
 (require "common.ss")
 (require srfi/19)
 
-(provide count-users new-u-vs-time)
+(provide count-users new-u-vs-time posts)
 
 ;; User Statistics Struct
 ;; String - usename in the form of an email address, possibility of duplicates
@@ -27,6 +27,15 @@
 
 ;; Collect stats in the form of '(USERNAME ustats)
 (define users (make-hash))
+
+;; Collect some other, extra stats, store in ngposts struct
+(define pcounts (make-hash))
+;; NewsGroup Posts Struct
+;; string - username ("From:" header)
+;; int    - Total posts by user
+;; int    - "post" posts by user
+;; int    - "reply" posts by user
+(define-struct ngposts (user tp np nr))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -52,9 +61,9 @@
 (define (count-users first last newsd)
   (cond
     [(= first last) (print-stats)]
-    [else (letrec [(message (message-getter newsd first (list from-regexp date-regexp)))
-                   (mesg-from (if (boolean? message) message (car message)))
-                   (mesg-date (if (boolean? message) message (cadr message)))]
+    [else (let* [(message (message-getter newsd first (list from-regexp date-regexp)))
+                 (mesg-from (if (boolean? message) message (car message)))
+                 (mesg-date (if (boolean? message) message (cadr message)))]
             (cond
               [(boolean? message) (void)]
               [else
@@ -91,10 +100,49 @@
     (hash-for-each
       users
       (lambda (k v)
-        (letrec [(ndate (date->string (ustats-firstp v) "~D"))
-                 (result (hash-ref new-u-hash ndate #f))]
+        (let* [(ndate (date->string (ustats-firstp v) "~D"))
+               (result (hash-ref new-u-hash ndate #f))]
           (cond
             [(boolean? result) (hash-set! new-u-hash ndate 1)]
             [else (hash-set! new-u-hash ndate (+ 1 result))]))))
     (hash-for-each new-u-hash
                    (lambda (k v) (printf "~a ~a~n" k v)))))
+
+;; posts: int int usergroup
+;; Counts the number of posts of each user, mapping email to post count.
+(define (posts first last newsd)
+  (cond
+    [(= first last)
+     (hash-for-each
+       pcounts
+       (lambda (k v)
+         (printf "~a\t~a~n" k (ngposts-tp v))))]
+    [else
+     (let* [(message (message-getter newsd first (list from-regexp ref-regexp)))
+            (mesg-from (if (boolean? message) #f (car message)))
+            (mesg-refs (if (and (not (boolean? message)) (= 2 (length message)))
+                           #t;(get-refs (cadr message)) ; only need to know, right?
+                           #f))]
+       (cond
+         [(boolean? message) (posts (add1 first) last newsd)]
+         [else
+          (let [(result (hash-ref pcounts mesg-from #f))]
+            (cond
+              [(boolean? result)
+               (if mesg-refs
+                   (hash-set! pcounts mesg-from (make-ngposts mesg-from 1 0 1))
+                   (hash-set! pcounts mesg-from (make-ngposts mesg-from 1 1 0)))
+               (posts (add1 first) last newsd)]
+              [else
+               (if mesg-refs
+                   (hash-set! pcounts mesg-from (make-ngposts
+                                                  mesg-from
+                                                  (add1 (ngposts-tp result))
+                                                  (ngposts-np result)
+                                                  (add1 (ngposts-nr result))))
+                   (hash-set! pcounts mesg-from (make-ngposts
+                                                  mesg-from
+                                                  (add1 (ngposts-tp result))
+                                                  (add1 (ngposts-np result))
+                                                  (ngposts-nr result))))
+               (posts (add1 first) last newsd)]))]))]))
